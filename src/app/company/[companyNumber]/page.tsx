@@ -11,7 +11,9 @@ import { FilingCard } from '@/components/ui/FilingCard';
 import { LoadingCard } from '@/components/ui/LoadingCard';
 import { 
   useGetCompanyDetailsQuery, 
-  useGetFilingHistoryQuery 
+  useGetFilingHistoryQuery,
+  useGetDocumentMetadataQuery,
+  useDownloadAndParseDocumentMutation
 } from '@/lib/api/companies-house-api';
 import type { AIFilingSummary, Filing } from '@/types/companies-house';
 
@@ -19,6 +21,7 @@ export default function CompanyDetailsPage() {
   const params = useParams();
   const companyNumber = params.companyNumber as string;
   const [analyzingFiling, setAnalyzingFiling] = useState<string | null>(null);
+  const [downloadingFiling, setDownloadingFiling] = useState<string | null>(null);
   const [analysisModalOpen, setAnalysisModalOpen] = useState(false);
   const [currentAnalysis, setCurrentAnalysis] = useState<AIFilingSummary | null>(null);
   const [currentFiling, setCurrentFiling] = useState<Filing | null>(null);
@@ -42,25 +45,140 @@ export default function CompanyDetailsPage() {
   );
 
   const handleDownload = async (filing: Filing) => {
-    console.log('Download filing:', filing);
-    // TODO: Implement document download
-    alert('Document download coming soon!');
+    console.log('Starting download for filing:', filing);
+    
+    if (!filing.links?.document_metadata) {
+      alert('No document available for download');
+      return;
+    }
+    
+    setDownloadingFiling(filing.transaction_id);
+    
+    try {
+      // Get document metadata using our secure proxy API
+      const metadataResponse = await fetch('/api/companies-house/document/metadata', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          documentMetadataUrl: filing.links.document_metadata
+        }),
+      });
+      
+      if (!metadataResponse.ok) {
+        throw new Error('Failed to get document metadata');
+      }
+      
+      const metadata = await metadataResponse.json();
+      console.log('Document metadata for download:', metadata);
+      
+      if (!metadata.links?.document) {
+        throw new Error('No document download link available');
+      }
+      
+      // The metadata.links.document is already the full content URL
+      const documentContentUrl = metadata.links.document;
+      
+      console.log('Downloading document via our proxy API...');
+      
+      // Create a direct download link that bypasses blob buffering
+      const downloadUrl = `/api/companies-house/document/download`;
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = `${filing.category}-${filing.date}-${filing.barcode || filing.transaction_id}.pdf`;
+      
+      // Add the document URL as a query parameter for the API
+      const urlWithParams = new URL(downloadUrl, window.location.origin);
+      urlWithParams.searchParams.set('documentUrl', documentContentUrl);
+      a.href = urlWithParams.toString();
+      
+      // Trigger the download directly
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      
+      console.log('Document downloaded successfully!');
+      
+    } catch (error) {
+      console.error('Download failed:', error);
+      alert('Failed to download document. Please try again.');
+    } finally {
+      setDownloadingFiling(null);
+    }
   };
 
+  const [downloadAndParseDocument] = useDownloadAndParseDocumentMutation();
+
   const handleAnalyze = async (filing: Filing) => {
-    console.log('Analyze filing:', filing);
+    console.log('Starting analysis for filing:', filing);
     setCurrentFiling(filing);
     setCurrentAnalysis(null);
     setAnalyzingFiling(filing.transaction_id);
     setAnalysisModalOpen(true);
     
     try {
+      let documentContent = '';
+      
+      // Step 1: Check if filing has document metadata link
+      if (filing.links?.document_metadata) {
+        console.log('Getting document metadata from:', filing.links.document_metadata);
+        
+        // Step 2: Get document metadata using our secure proxy API
+        const metadataResponse = await fetch('/api/companies-house/document/metadata', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            documentMetadataUrl: filing.links.document_metadata
+          }),
+        });
+        
+        if (metadataResponse.ok) {
+          const metadata = await metadataResponse.json();
+          console.log('Document metadata received:', metadata);
+          
+          if (metadata.links?.document) {
+            console.log('Downloading and parsing document from:', metadata.links.document);
+            
+            // Step 3: Download and parse the document
+            // The metadata.links.document is already the full content URL
+            const documentContentUrl = metadata.links.document;
+            
+            try {
+              // For AI analysis, we want to parse the document, not download it
+              const documentResult = await downloadAndParseDocument({
+                documentUrl: documentContentUrl,
+                parseOnly: true
+              }).unwrap();
+              documentContent = documentResult.extractedText;
+              console.log(`Document parsed successfully: ${documentResult.documentType}, ${documentResult.contentLength} characters`);
+            } catch (downloadError) {
+              console.error('Document download/parsing failed:', downloadError);
+              // Continue with analysis without document content
+            }
+          } else {
+            console.log('No document link found in metadata response');
+          }
+        } else {
+          console.error('Failed to fetch document metadata:', metadataResponse.status);
+        }
+      } else {
+        console.log('No document metadata link available for this filing');
+      }
+      
+      // Step 4: Perform AI analysis with or without document content
+      console.log('Sending to AI analysis...');
       const response = await fetch('/api/ai/analyze-filing', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ filing }),
+        body: JSON.stringify({ 
+          filing,
+          documentContent: documentContent || undefined
+        }),
       });
 
       if (!response.ok) {
@@ -69,9 +187,10 @@ export default function CompanyDetailsPage() {
 
       const analysis = await response.json();
       setCurrentAnalysis(analysis);
+      console.log('Analysis completed successfully');
+      
     } catch (error) {
-      console.error('Analysis failed:', error);
-      // You could set an error state here instead of closing the modal
+      console.error('Analysis workflow failed:', error);
       setAnalysisModalOpen(false);
       alert('Analysis failed. Please try again.');
     } finally {
@@ -290,6 +409,7 @@ export default function CompanyDetailsPage() {
                     onDownload={handleDownload}
                     onAnalyze={handleAnalyze}
                     isAnalyzing={analyzingFiling === filing.transaction_id}
+                    isDownloading={downloadingFiling === filing.transaction_id}
                   />
                 </Grid.Col>
               ))}

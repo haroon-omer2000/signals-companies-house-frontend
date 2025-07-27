@@ -11,6 +11,7 @@ interface FilingCardProps {
   onDownload: (filing: Filing) => void;
   onAnalyze: (filing: Filing) => void;
   isAnalyzing?: boolean;
+  isDownloading?: boolean;
 }
 
 export function FilingCard({ 
@@ -18,7 +19,8 @@ export function FilingCard({
   index, 
   onDownload, 
   onAnalyze, 
-  isAnalyzing = false 
+  isAnalyzing = false,
+  isDownloading = false 
 }: FilingCardProps) {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-GB', {
@@ -109,14 +111,15 @@ export function FilingCard({
           <Button
             variant="outline"
             size="xs"
-            leftSection={<Download size={14} />}
+            leftSection={!isDownloading ? <Download size={14} /> : undefined}
             onClick={() => onDownload(filing)}
+            loading={isDownloading}
             style={{
               borderColor: '#d1d5db',
               color: '#374151'
             }}
           >
-            Download
+            {isDownloading ? 'Downloading...' : 'Download'}
           </Button>
           
           <Button

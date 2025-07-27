@@ -68,11 +68,18 @@ export const companiesHouseApi = createApi({
       ],
     }),
 
-    // Download document
-    downloadDocument: builder.query<Blob, string>({
-      query: (documentUrl) => ({
-        url: `/document${documentUrl}`,
-        responseHandler: (response) => response.blob(),
+    // Download and parse document
+    downloadAndParseDocument: builder.mutation<{
+      success: boolean;
+      documentType: string;
+      contentLength: number;
+      extractedText: string;
+      originalUrl: string;
+    }, { documentUrl: string; parseOnly?: boolean }>({
+      query: ({ documentUrl, parseOnly }) => ({
+        url: '/companies-house/document/download',
+        method: 'POST',
+        body: { documentUrl, parseOnly },
       }),
     }),
 
@@ -108,8 +115,7 @@ export const {
   useGetCompanyDetailsQuery,
   useGetFilingHistoryQuery,
   useGetDocumentMetadataQuery,
-  useDownloadDocumentQuery,
-  useLazyDownloadDocumentQuery,
+  useDownloadAndParseDocumentMutation,
   useGenerateFilingSummaryMutation,
   useGenerateTrendsSummaryMutation,
 } = companiesHouseApi; 

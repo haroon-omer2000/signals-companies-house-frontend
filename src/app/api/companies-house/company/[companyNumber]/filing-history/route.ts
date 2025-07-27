@@ -4,9 +4,9 @@ import type { Filing } from '@/types/companies-house';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { companyNumber: string } }
+  { params }: { params: Promise<{ companyNumber: string }> }
 ) {
-  const { companyNumber } = params;
+  const { companyNumber } = await params;
   const searchParams = request.nextUrl.searchParams;
   const itemsPerPage = searchParams.get('items_per_page') || '100';
   const category = searchParams.get('category');
