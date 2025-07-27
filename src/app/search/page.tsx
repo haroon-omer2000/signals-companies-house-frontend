@@ -34,8 +34,7 @@ export default function SearchPage() {
 
   const handleCompanyClick = useCallback((company: CompanySearchResult) => {
     setSelectedCompany(company);
-    // TODO: Navigate to company details page
-    console.log('Selected company:', company);
+    window.location.href = `/company/${company.company_number}`;
   }, []);
 
   const EmptyState = () => (
