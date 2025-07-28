@@ -2,9 +2,9 @@
 
 import { useCallback, useState } from 'react';
 
-import { Alert, Container, Grid, Group, Stack, Text, Title } from '@mantine/core';
+import { Alert, Button, Container, Grid, Group, Stack, Text, Title } from '@mantine/core';
 import { motion } from 'framer-motion';
-import { AlertCircle, Building2, Search as SearchIcon } from 'lucide-react';
+import { AlertCircle, Building2, ChevronLeft, ChevronRight, Search as SearchIcon } from 'lucide-react';
 
 import { CompanySearchForm } from '@/components/forms/CompanySearchForm';
 import { CompanyCard } from '@/components/ui/CompanyCard';
@@ -14,6 +14,8 @@ import type { CompanySearchResult } from '@/types/companies-house';
 
 export default function SearchPage() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   // RTK Query for company search
   const {
@@ -22,17 +24,36 @@ export default function SearchPage() {
     error,
     isFetching,
   } = useSearchCompaniesQuery(
-    { query: searchQuery, items_per_page: 20 },
+    { 
+      query: searchQuery, 
+      items_per_page: itemsPerPage,
+      start_index: (currentPage - 1) * itemsPerPage + 1
+    },
     { skip: !searchQuery.trim() }
   );
 
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
+    setCurrentPage(1); // Reset to first page on new search
   }, []);
 
   const handleCompanyClick = useCallback((company: CompanySearchResult) => {
     window.location.href = `/company/${company.company_number}`;
   }, []);
+
+  // Pagination handlers
+  const handleNextPage = useCallback(() => {
+    setCurrentPage(prev => prev + 1);
+  }, []);
+
+  const handlePrevPage = useCallback(() => {
+    setCurrentPage(prev => Math.max(1, prev - 1));
+  }, []);
+
+  // Calculate pagination info
+  const totalPages = searchResults ? Math.ceil(searchResults.total_results / itemsPerPage) : 0;
+  const startResult = (currentPage - 1) * itemsPerPage + 1;
+  const endResult = Math.min(currentPage * itemsPerPage, searchResults?.total_results || 0);
 
   const EmptyState = () => (
     <motion.div
@@ -151,22 +172,70 @@ export default function SearchPage() {
                   Found {searchResults.total_results.toLocaleString()} companies
                 </Text>
                 <Text size="sm" c="dimmed">
-                  Showing {searchResults.items.length} results
+                  Showing {startResult.toLocaleString()} - {endResult.toLocaleString()} of {searchResults.total_results.toLocaleString()} results
                 </Text>
               </Group>
 
               {searchResults.items.length > 0 ? (
-                <Grid>
-                  {searchResults.items.map((company, index) => (
-                    <Grid.Col key={company.company_number} span={{ base: 12, sm: 6, lg: 4 }}>
-                      <CompanyCard
-                        company={company}
-                        index={index}
-                        onClick={handleCompanyClick}
-                      />
-                    </Grid.Col>
-                  ))}
-                </Grid>
+                <>
+                  <Grid>
+                    {searchResults.items.map((company, index) => (
+                      <Grid.Col key={company.company_number} span={{ base: 12, sm: 6, lg: 4 }}>
+                        <CompanyCard
+                          company={company}
+                          index={index}
+                          onClick={handleCompanyClick}
+                        />
+                      </Grid.Col>
+                    ))}
+                  </Grid>
+
+                  {/* Pagination Controls */}
+                  {totalPages > 1 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                      style={{ marginTop: '2rem', marginBottom: '4rem' }}
+                    >
+                      <Group justify="center" gap="md">
+                        <Button
+                          variant="light"
+                          leftSection={<ChevronLeft size={16} />}
+                          onClick={handlePrevPage}
+                          disabled={currentPage === 1}
+                          style={{
+                            backgroundColor: currentPage === 1 ? '#f3f4f6' : '#3b82f6',
+                            color: currentPage === 1 ? '#9ca3af' : 'white',
+                            border: '1px solid #e5e7eb'
+                          }}
+                        >
+                          Previous
+                        </Button>
+
+                        <Group gap="xs">
+                          <Text size="sm" style={{ color: '#6b7280' }}>
+                            Page {currentPage} of {totalPages}
+                          </Text>
+                        </Group>
+
+                        <Button
+                          variant="light"
+                          rightSection={<ChevronRight size={16} />}
+                          onClick={handleNextPage}
+                          disabled={currentPage === totalPages}
+                          style={{
+                            backgroundColor: currentPage === totalPages ? '#f3f4f6' : '#3b82f6',
+                            color: currentPage === totalPages ? '#9ca3af' : 'white',
+                            border: '1px solid #e5e7eb'
+                          }}
+                        >
+                          Next
+                        </Button>
+                      </Group>
+                    </motion.div>
+                  )}
+                </>
               ) : (
                 <NoResults />
               )}
