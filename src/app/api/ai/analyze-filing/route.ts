@@ -184,10 +184,17 @@ Filing Information:
 Document Content:
 ${truncatedContent}
 
-Please provide:
-1. A comprehensive summary (2-3 sentences) of the key information in this document
-2. 3-5 specific key insights about the company's financial position, operations, or governance
-3. Financial highlights including specific figures where available (revenue, profit, assets, liabilities, etc.)
+Please provide your analysis in the following format:
+
+**Summary**: Write a comprehensive paragraph (3-5 sentences) that extracts and explains the key financial data, business performance metrics, significant changes, and important information revealed in this document. Focus on specific figures, trends, and insights rather than generic statements about the document type. Write this as a flowing paragraph without any numbering or bullet points.
+
+**Key Insights**: 
+- [First key insight about financial position or operations]
+- [Second key insight about business performance or governance]
+- [Third key insight about trends or significant changes]
+
+**Financial Highlights**: 
+- [Specific financial figures and metrics found in the document]
 
 Focus on extracting concrete financial data and meaningful business insights from the actual document content.
   `;
@@ -199,7 +206,7 @@ Focus on extracting concrete financial data and meaningful business insights fro
       messages: [
         {
           role: 'system',
-          content: 'You are a financial analyst expert in UK company filings and Companies House documents. Extract specific financial data and provide actionable business insights from the provided document content.'
+          content: 'You are a financial analyst expert in UK company filings and Companies House documents. Your task is to extract specific financial data and provide detailed, actionable business insights from the provided document content. Always write summaries as flowing paragraphs (3-5 sentences) that focus on concrete financial figures, business performance metrics, and meaningful insights rather than generic document descriptions.'
         },
         {
           role: 'user',
@@ -213,8 +220,17 @@ Focus on extracting concrete financial data and meaningful business insights fro
     const content = completion.choices[0]?.message?.content || '';
     
     // Parse the AI response into structured data
+    const summary = extractSection(content, 'summary') || extractFirstParagraph(content) || 'Analysis of this financial document reveals important business and regulatory information.';
+    
+    // Clean up any numbering or formatting artifacts
+    const cleanSummary = summary
+      .replace(/^\d+\.\s*/, '') // Remove leading numbers like "1."
+      .replace(/^[-*]\s*/, '') // Remove leading bullets
+      .replace(/^\*\*Summary\*\*:\s*/i, '') // Remove "**Summary**:" prefix
+      .trim();
+    
     return {
-      summary: extractSection(content, 'summary') || extractFirstParagraph(content) || 'Analysis of this financial document reveals important business and regulatory information.',
+      summary: cleanSummary,
     };
   } catch (aiError) {
     console.error('OpenAI API Error in real analysis:', aiError);
@@ -235,9 +251,22 @@ function analyzeContentBasically(filing: Filing, documentContent: string) {
   // Basic content analysis without AI
   const wordCount = documentContent.split(/\s+/).length;
   const hasFinancialTerms = /revenue|profit|assets|liabilities|turnover|income|balance/i.test(documentContent);
+  const hasNumbers = /\d{1,3}(,\d{3})*(\.\d{2})?/.test(documentContent);
+  
+  let summary = `This ${filing.category} document contains ${wordCount} words of ${hasFinancialTerms ? 'financial and business' : 'regulatory'} information. `;
+  
+  if (hasFinancialTerms && hasNumbers) {
+    summary += `The document includes detailed financial figures and performance metrics that provide insights into the company's financial position and business operations during the reporting period. `;
+  } else if (hasFinancialTerms) {
+    summary += `The document contains financial information and business disclosures that outline the company's operational and regulatory compliance during the reporting period. `;
+  } else {
+    summary += `The filing provides statutory disclosures and regulatory information required by Companies House for the period ending ${filing.date}. `;
+  }
+  
+  summary += `This comprehensive filing offers valuable insights into the company's structure, performance, and compliance with UK corporate governance requirements.`;
   
   return {
-    summary: `This ${filing.category} document contains ${wordCount} words of ${hasFinancialTerms ? 'financial and business' : 'regulatory'} information. The filing provides statutory disclosures required by Companies House for the period ending ${filing.date}.`,
+    summary,
   };
 }
 
@@ -272,18 +301,27 @@ function generateMockAnalysis(filing: Filing) {
 }
 
 function extractSection(content: string, sectionName: string): string | null {
+  // Look for **Summary**: pattern first
+  const summaryPattern = new RegExp(`\\*\\*${sectionName}\\*\\*:\\s*(.+?)(?=\\n\\*\\*|$)`, 'is');
+  const summaryMatch = content.match(summaryPattern);
+  if (summaryMatch) {
+    return summaryMatch[1].trim();
+  }
+  
+  // Fallback to line-by-line parsing
   const lines = content.split('\n');
   let inSection = false;
   let section = '';
   
   for (const line of lines) {
-    if (line.toLowerCase().includes(sectionName)) {
+    if (line.toLowerCase().includes(sectionName.toLowerCase())) {
       inSection = true;
       continue;
     }
     
     if (inSection) {
-      if (line.trim() === '' || line.match(/^\d+\./)) {
+      // Stop at next section or empty line followed by numbered item
+      if (line.trim() === '' || line.match(/^\d+\./) || line.match(/^\*\*/)) {
         break;
       }
       section += line.trim() + ' ';
