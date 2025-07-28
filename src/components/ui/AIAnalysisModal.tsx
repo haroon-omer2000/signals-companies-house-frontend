@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 
-import { Badge, Button, Divider, Group, Stack, Text, Title } from '@mantine/core';
+import { Badge, Button, Group, Stack, Text, Title } from '@mantine/core';
 import { motion } from 'framer-motion';
-import { Brain, FileText, Sparkles, TrendingUp, Download } from 'lucide-react';
+import { Brain, FileText, Sparkles, Download } from 'lucide-react';
 
 import type { AIFilingSummary, Filing } from '@/types/companies-house';
 
@@ -31,7 +31,6 @@ export function AIAnalysisModal({
   companyName = 'Company',
   companyNumber = 'Unknown'
 }: AIAnalysisModalProps) {
-  const [showInsights, setShowInsights] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
   const handleDownloadPDF = async () => {
@@ -45,7 +44,6 @@ export function AIAnalysisModal({
         filingType: getCategoryLabel(filing.category),
         filingDate: formatDate(filing.date),
         summary: analysis.summary,
-        keyInsights: analysis.key_insights,
       });
     } catch (error) {
       console.error('Error generating PDF:', error);
@@ -176,66 +174,14 @@ export function AIAnalysisModal({
                     border: '1px solid #e5e7eb',
                     borderRadius: '8px'
                   }}
-                  onComplete={() => setShowInsights(true)}
                 />
               </div>
-
-              <Divider />
-
-              {/* Key Insights */}
-              {showInsights && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <Group gap="sm" style={{ marginBottom: '1rem' }}>
-                    <TrendingUp size={20} style={{ color: '#10b981' }} />
-                    <Title order={3} style={{ color: '#1f2937', margin: 0 }}>
-                      Key Insights
-                    </Title>
-                  </Group>
-                  
-                  <Stack gap="sm">
-                    {analysis.key_insights.map((insight, index) => (
-                      <motion.div
-                        key={index}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.4, delay: index * 0.1 }}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'flex-start',
-                          gap: '0.75rem',
-                          padding: '0.75rem',
-                          backgroundColor: '#f0fdf4',
-                          border: '1px solid #bbf7d0',
-                          borderRadius: '6px'
-                        }}
-                      >
-                        <div style={{
-                          width: '6px',
-                          height: '6px',
-                          backgroundColor: '#10b981',
-                          borderRadius: '50%',
-                          marginTop: '0.5rem',
-                          flexShrink: 0
-                        }} />
-                        <Text size="sm" style={{ color: '#065f46', lineHeight: '1.5' }}>
-                          {insight}
-                        </Text>
-                      </motion.div>
-                    ))}
-                  </Stack>
-                  
-                </motion.div>
-              )}
 
               {/* Action Buttons */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: analysis.key_insights.length * 0.1 + 0.5 }}
+                transition={{ delay: 0.5 }}
                 style={{ textAlign: 'center', paddingTop: '2rem' }}
               >
                 <Group gap="md" justify="center">
