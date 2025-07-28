@@ -88,7 +88,7 @@ A modern web application that provides AI-powered analysis of UK company filings
 - **Impact**: Simplified styling approach with inline styles
 - **Solution**: Removed complex CSS layers, used direct styling for stability
 
-## 📊 Data Visualization Features
+## 📊 Data Visualization Features (Besides the requirements)
 
 ### Filing Trends Dashboard
 - Monthly filing activity charts (last 12 months)
