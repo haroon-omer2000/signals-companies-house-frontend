@@ -3,8 +3,8 @@
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 
-import { Alert, Badge, Container, Grid, Group, Stack, Text, Title } from '@mantine/core';
-import { AlertCircle, Building2, Calendar, MapPin, Shield } from 'lucide-react';
+import { Badge, Container, Grid, Group, Stack, Text, Title } from '@mantine/core';
+import { Building2, Calendar, MapPin, Shield } from 'lucide-react';
 
 import { AIAnalysisModal } from '@/components/ui/AIAnalysisModal';
 import { FilingCard } from '@/components/ui/FilingCard';
@@ -12,7 +12,6 @@ import { LoadingCard } from '@/components/ui/LoadingCard';
 import { 
   useGetCompanyDetailsQuery, 
   useGetFilingHistoryQuery,
-  useGetDocumentMetadataQuery,
   useDownloadAndParseDocumentMutation
 } from '@/lib/api/companies-house-api';
 import type { AIFilingSummary, Filing } from '@/types/companies-house';
@@ -30,7 +29,6 @@ export default function CompanyDetailsPage() {
   const {
     data: companyDetails,
     isLoading: isLoadingCompany,
-    error: companyError,
   } = useGetCompanyDetailsQuery(companyNumber, {
     skip: !companyNumber,
   });
@@ -38,7 +36,6 @@ export default function CompanyDetailsPage() {
   const {
     data: filingHistory,
     isLoading: isLoadingFilings,
-    error: filingsError,
   } = useGetFilingHistoryQuery(
     { companyNumber, items_per_page: 100 },
     { skip: !companyNumber }
@@ -228,23 +225,7 @@ export default function CompanyDetailsPage() {
     }
   };
 
-  if (companyError) {
-    return (
-      <Container size="md" style={{ padding: '2rem 0' }}>
-        <Alert 
-          variant="light" 
-          color="red" 
-          title="Error Loading Company"
-          icon={<AlertCircle size={16} />}
-        >
-          {companyError && 'data' in companyError 
-            ? (companyError.data as { error?: string })?.error || 'Failed to load company details'
-            : 'Network error - please check your connection'
-          }
-        </Alert>
-      </Container>
-    );
-  }
+
 
   if (isLoadingCompany) {
     return (
@@ -374,20 +355,7 @@ export default function CompanyDetailsPage() {
             Recent Financial Filings
           </Title>
 
-          {filingsError && (
-            <Alert 
-              variant="light" 
-              color="red" 
-              title="Error Loading Filings"
-              icon={<AlertCircle size={16} />}
-              style={{ marginBottom: '1rem' }}
-            >
-              {filingsError && 'data' in filingsError 
-                ? (filingsError.data as { error?: string })?.error || 'Failed to load filing history'
-                : 'Network error - please check your connection'
-              }
-            </Alert>
-          )}
+
 
           {isLoadingFilings && (
             <Grid>
@@ -401,11 +369,10 @@ export default function CompanyDetailsPage() {
 
           {filingHistory && filingHistory.items && filingHistory.items.length > 0 && (
             <Grid>
-              {filingHistory.items.map((filing, index) => (
+              {filingHistory.items.map((filing) => (
                 <Grid.Col key={filing.transaction_id} span={{ base: 12, sm: 6, lg: 4 }}>
                   <FilingCard
                     filing={filing}
-                    index={index}
                     onDownload={handleDownload}
                     onAnalyze={handleAnalyze}
                     isAnalyzing={analyzingFiling === filing.transaction_id}
@@ -442,6 +409,8 @@ export default function CompanyDetailsPage() {
           filing={currentFiling}
           analysis={currentAnalysis}
           isLoading={analyzingFiling !== null}
+          companyName={companyDetails?.company_name}
+          companyNumber={companyDetails?.company_number}
         />
       </Stack>
     </Container>

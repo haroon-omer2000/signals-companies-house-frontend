@@ -6,11 +6,8 @@ import {
   CompanySearchResponse,
   DocumentMetadata,
   Filing,
-  FilingHistoryResponse,
-  TrendsSummary
+  FilingHistoryResponse
 } from '@/types/companies-house';
-
-const COMPANIES_HOUSE_BASE_URL = 'https://api.company-information.service.gov.uk';
 
 export const companiesHouseApi = createApi({
   reducerPath: 'companiesHouseApi',
@@ -77,7 +74,7 @@ export const companiesHouseApi = createApi({
       originalUrl: string;
     }, { documentUrl: string; parseOnly?: boolean }>({
       query: ({ documentUrl, parseOnly }) => ({
-        url: '/companies-house/document/download',
+        url: '/document/download',
         method: 'POST',
         body: { documentUrl, parseOnly },
       }),
@@ -96,17 +93,7 @@ export const companiesHouseApi = createApi({
       invalidatesTags: ['Summary'],
     }),
 
-    generateTrendsSummary: builder.mutation<TrendsSummary, {
-      companyNumber: string;
-      summaries: AIFilingSummary[];
-    }>({
-      query: ({ companyNumber, summaries }) => ({
-        url: '/ai/generate-trends',
-        method: 'POST',
-        body: { companyNumber, summaries },
-      }),
-      invalidatesTags: ['Summary'],
-    }),
+
   }),
 });
 
@@ -117,5 +104,4 @@ export const {
   useGetDocumentMetadataQuery,
   useDownloadAndParseDocumentMutation,
   useGenerateFilingSummaryMutation,
-  useGenerateTrendsSummaryMutation,
 } = companiesHouseApi; 

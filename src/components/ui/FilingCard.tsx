@@ -7,7 +7,6 @@ import type { Filing } from '@/types/companies-house';
 
 interface FilingCardProps {
   filing: Filing;
-  index: number;
   onDownload: (filing: Filing) => void;
   onAnalyze: (filing: Filing) => void;
   isAnalyzing?: boolean;
@@ -16,7 +15,6 @@ interface FilingCardProps {
 
 export function FilingCard({ 
   filing, 
-  index, 
   onDownload, 
   onAnalyze, 
   isAnalyzing = false,

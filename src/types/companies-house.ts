@@ -118,20 +118,6 @@ export interface AIFilingSummary {
   filing_date: string;
   summary: string;
   key_insights: string[];
-  financial_highlights?: {
-    revenue?: string;
-    profit?: string;
-    assets?: string;
-    liabilities?: string;
-  };
 }
 
-export interface TrendsSummary {
-  company_number: string;
-  period_covered: string;
-  overall_assessment: string;
-  key_trends: string[];
-  financial_trajectory: 'improving' | 'declining' | 'stable' | 'mixed';
-  notable_changes: string[];
-  risk_factors: string[];
-} 
+ 

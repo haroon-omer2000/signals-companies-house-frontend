@@ -4,12 +4,13 @@ import { useState } from 'react';
 
 import { Badge, Button, Divider, Group, Stack, Text, Title } from '@mantine/core';
 import { motion } from 'framer-motion';
-import { Brain, FileText, Sparkles, TrendingUp } from 'lucide-react';
+import { Brain, FileText, Sparkles, TrendingUp, Download } from 'lucide-react';
 
 import type { AIFilingSummary, Filing } from '@/types/companies-house';
 
 import { Modal } from './Modal';
 import { TypewriterText } from './TypewriterText';
+import { generateAnalysisPDF } from '@/lib/utils/pdf-generator';
 
 interface AIAnalysisModalProps {
   isOpen: boolean;
@@ -17,6 +18,8 @@ interface AIAnalysisModalProps {
   filing: Filing | null;
   analysis: AIFilingSummary | null;
   isLoading: boolean;
+  companyName?: string;
+  companyNumber?: string;
 }
 
 export function AIAnalysisModal({ 
@@ -24,9 +27,32 @@ export function AIAnalysisModal({
   onClose, 
   filing, 
   analysis, 
-  isLoading 
+  isLoading,
+  companyName = 'Company',
+  companyNumber = 'Unknown'
 }: AIAnalysisModalProps) {
   const [showInsights, setShowInsights] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownloadPDF = async () => {
+    if (!filing || !analysis) return;
+    
+    setIsDownloading(true);
+    try {
+      generateAnalysisPDF({
+        companyName,
+        companyNumber,
+        filingType: getCategoryLabel(filing.category),
+        filingDate: formatDate(filing.date),
+        summary: analysis.summary,
+        keyInsights: analysis.key_insights,
+      });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-GB', {
@@ -205,24 +231,40 @@ export function AIAnalysisModal({
                 </motion.div>
               )}
 
-                             {/* Close Button */}
-               <motion.div
-                 initial={{ opacity: 0 }}
-                 animate={{ opacity: 1 }}
-                 transition={{ delay: analysis.key_insights.length * 0.1 + 0.5 }}
-                 style={{ textAlign: 'center', paddingTop: '2rem' }}
-               >
-                 <Button
-                   onClick={onClose}
-                   size="md"
-                   style={{
-                     background: 'linear-gradient(to right, #3b82f6, #8b5cf6)',
-                     border: 'none'
-                   }}
-                 >
-                   Close Analysis
-                 </Button>
-               </motion.div>
+              {/* Action Buttons */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: analysis.key_insights.length * 0.1 + 0.5 }}
+                style={{ textAlign: 'center', paddingTop: '2rem' }}
+              >
+                <Group gap="md" justify="center">
+                  <Button
+                    onClick={handleDownloadPDF}
+                    loading={isDownloading}
+                    leftSection={<Download size={16} />}
+                    size="md"
+                    variant="outline"
+                    style={{
+                      borderColor: '#3b82f6',
+                      color: '#3b82f6'
+                    }}
+                  >
+                    {isDownloading ? 'Generating PDF...' : 'Download Summary PDF'}
+                  </Button>
+                  
+                  <Button
+                    onClick={onClose}
+                    size="md"
+                    style={{
+                      background: 'linear-gradient(to right, #3b82f6, #8b5cf6)',
+                      border: 'none'
+                    }}
+                  >
+                    Close Analysis
+                  </Button>
+                </Group>
+              </motion.div>
             </Stack>
           </motion.div>
         )}

@@ -14,7 +14,6 @@ import type { CompanySearchResult } from '@/types/companies-house';
 
 export default function SearchPage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCompany, setSelectedCompany] = useState<CompanySearchResult | null>(null);
 
   // RTK Query for company search
   const {
@@ -29,11 +28,9 @@ export default function SearchPage() {
 
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
-    setSelectedCompany(null);
   }, []);
 
   const handleCompanyClick = useCallback((company: CompanySearchResult) => {
-    setSelectedCompany(company);
     window.location.href = `/company/${company.company_number}`;
   }, []);
 

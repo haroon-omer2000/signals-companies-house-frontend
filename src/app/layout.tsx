@@ -3,7 +3,6 @@ import { Inter } from 'next/font/google';
 
 import { ColorSchemeScript } from '@mantine/core';
 import '@mantine/core/styles.css';
-import '@mantine/notifications/styles.css';
 
 import { Header } from '@/components/layout/Header';
 import { Providers } from '@/lib/store/providers';
@@ -31,7 +30,7 @@ export default function RootLayout({
         <Providers>
           <Header />
           <main>
-            {children}
+        {children}
           </main>
         </Providers>
       </body>

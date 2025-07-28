@@ -197,7 +197,7 @@ export default function HomePage() {
               Search Companies Now
             </Button>
           </Link>
-        </div>
+    </div>
       </Stack>
     </Container>
   );
