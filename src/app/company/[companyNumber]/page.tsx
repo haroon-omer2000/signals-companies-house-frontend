@@ -8,6 +8,8 @@ import { Building2, Calendar, MapPin, Shield } from 'lucide-react';
 
 import { AIAnalysisModal } from '@/components/ui/AIAnalysisModal';
 import { FilingCard } from '@/components/ui/FilingCard';
+import { FilingTrendsDashboard } from '@/components/ui/FilingTrendsDashboard';
+import { FinancialHealthScore } from '@/components/ui/FinancialHealthScore';
 import { LoadingCard } from '@/components/ui/LoadingCard';
 import { 
   useGetCompanyDetailsQuery, 
@@ -267,7 +269,8 @@ export default function CompanyDetailsPage() {
             backgroundColor: 'white',
             borderRadius: '12px',
             border: '1px solid #e5e7eb',
-            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+            marginBottom: '2rem'
           }}>
             <Group gap="lg" align="flex-start">
               <div style={{ 
@@ -341,6 +344,22 @@ export default function CompanyDetailsPage() {
               </div>
             </Group>
           </div>
+        )}
+
+        {/* Filing Trends Dashboard */}
+        {filingHistory && filingHistory.items && filingHistory.items.length > 0 && (
+          <FilingTrendsDashboard 
+            filings={filingHistory.items}
+            companyName={companyDetails?.company_name || 'Company'}
+          />
+        )}
+
+        {/* Financial Health Score */}
+        {filingHistory && filingHistory.items && filingHistory.items.length > 0 && (
+          <FinancialHealthScore 
+            filings={filingHistory.items}
+            companyName={companyDetails?.company_name || 'Company'}
+          />
         )}
 
         {/* Filing History Section */}
