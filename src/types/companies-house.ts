@@ -117,7 +117,6 @@ export interface AIFilingSummary {
   filing_type: string;
   filing_date: string;
   summary: string;
-  key_insights: string[];
 }
 
  

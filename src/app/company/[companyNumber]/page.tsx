@@ -93,10 +93,7 @@ export default function CompanyDetailsPage() {
       // Trigger the download directly
       document.body.appendChild(a);
       a.click();
-      document.body.removeChild(a);
-      
-      console.log('Document downloaded successfully!');
-      
+      document.body.removeChild(a);      
     } catch (error) {
       console.error('Download failed:', error);
       alert('Failed to download document. Please try again.');

@@ -75,37 +75,6 @@ function generateEnhancedAnalysis(filing: Filing, documentContent: string) {
   const filingYear = new Date(filing.date).getFullYear();
   const filingType = filing.category || filing.type || 'filing';
   
-  // Analyze document content for key insights
-  const content = documentContent.toLowerCase();
-  const insights: string[] = [];
-  
-
-  
-  // Extract additional insights
-  if (content.includes('revenue') || content.includes('turnover')) {
-    insights.push('Comprehensive revenue and turnover analysis included in financial statements');
-  }
-  
-  if (content.includes('profit') || content.includes('loss')) {
-    insights.push('Detailed profit and loss account with performance metrics');
-  }
-  
-  if (content.includes('assets') || content.includes('liabilities')) {
-    insights.push('Complete balance sheet with assets, liabilities, and equity breakdown');
-  }
-  
-  if (content.includes('directors') || content.includes('shareholders')) {
-    insights.push('Corporate governance details including director and shareholder information');
-  }
-  
-  if (content.includes('cash') || content.includes('flow')) {
-    insights.push('Cash flow statement with liquidity and working capital analysis');
-  }
-  
-  if (content.includes('audit') || content.includes('auditor')) {
-    insights.push('Independent audit report with professional opinion on financial statements');
-  }
-  
   // Generate detailed summary based on filing type and content
   let summary = '';
   const wordCount = Math.round(documentContent.length / 5); // Rough estimate
@@ -127,18 +96,8 @@ function generateEnhancedAnalysis(filing: Filing, documentContent: string) {
       summary = `This ${filingType} filing from ${filingYear} contains approximately ${wordCount} words of comprehensive regulatory and financial information. The document provides detailed insights into the company's operations, governance structure, and financial status, including statutory disclosures required by Companies House, corporate governance information, and financial performance data. This filing represents a complete record of the company's activities and compliance with UK regulatory requirements during the reporting period.`;
   }
   
-  // Add default insights if none were found
-  if (insights.length === 0) {
-    insights.push(
-      'Comprehensive financial and regulatory information provided',
-      'Detailed corporate governance and compliance data included',
-      'Complete statutory disclosures as required by UK company law'
-    );
-  }
-  
   return {
     summary,
-    key_insights: insights,
   };
 }
 
@@ -189,7 +148,6 @@ export async function POST(request: NextRequest) {
       filing_type: filing.category,
       filing_date: filing.date,
       summary: analysis.summary,
-      key_insights: analysis.key_insights,
     });
   } catch (error) {
     console.error('AI Analysis Error:', error);
@@ -257,11 +215,6 @@ Focus on extracting concrete financial data and meaningful business insights fro
     // Parse the AI response into structured data
     return {
       summary: extractSection(content, 'summary') || extractFirstParagraph(content) || 'Analysis of this financial document reveals important business and regulatory information.',
-      key_insights: extractListItems(content, 'insights') || extractListItems(content, 'key') || [
-        'Document contains detailed financial information',
-        'Company maintains regulatory compliance',
-        'Financial position documented as per Companies House requirements'
-      ],
     };
   } catch (aiError) {
     console.error('OpenAI API Error in real analysis:', aiError);
@@ -285,12 +238,6 @@ function analyzeContentBasically(filing: Filing, documentContent: string) {
   
   return {
     summary: `This ${filing.category} document contains ${wordCount} words of ${hasFinancialTerms ? 'financial and business' : 'regulatory'} information. The filing provides statutory disclosures required by Companies House for the period ending ${filing.date}.`,
-    key_insights: [
-      `Document contains ${wordCount} words of content`,
-      hasFinancialTerms ? 'Financial terminology present in document' : 'Regulatory compliance document',
-      'Filed in accordance with Companies House requirements',
-      'Contains statutory business disclosures'
-    ],
   };
 }
 
@@ -301,52 +248,26 @@ function generateMockAnalysis(filing: Filing) {
   
   // Create context-aware summaries based on filing type
   let summary = '';
-  let insights: string[] = [];
   
   switch (filing.category) {
     case 'accounts':
       summary = `This annual accounts filing from ${filingYear} provides comprehensive financial statements including balance sheet, profit and loss account, and cash flow statement. The document offers detailed insights into the company's financial performance, position, and cash flows during the reporting period.`;
-      insights = [
-        'Comprehensive financial performance analysis',
-        'Balance sheet showing assets, liabilities, and equity',
-        'Profit and loss statement with revenue and expense breakdown',
-        'Cash flow analysis and liquidity assessment'
-      ];
       break;
       
     case 'annual-returns':
       summary = `This annual return filing from ${filingYear} contains essential corporate information including registered office address, directors, shareholders, and share capital details. It provides a snapshot of the company's current structure and ownership.`;
-      insights = [
-        'Current corporate structure and governance',
-        'Director and shareholder information',
-        'Registered office and contact details',
-        'Share capital and ownership structure'
-      ];
       break;
       
     case 'confirmation-statement':
       summary = `This confirmation statement from ${filingYear} confirms that the company's information on the public register is accurate and up-to-date. It includes details about directors, shareholders, and registered office address.`;
-      insights = [
-        'Confirmation of accurate public register information',
-        'Updated director and shareholder details',
-        'Current registered office address',
-        'Compliance with Companies Act requirements'
-      ];
       break;
       
     default:
       summary = `This ${filingType} filing from ${filingYear} contains important regulatory and financial information for the company. The document provides statutory disclosures required by Companies House and offers insights into the company's operational and financial status during the reporting period.`;
-      insights = [
-        'Regulatory compliance filing',
-        'Financial and operational information',
-        'Corporate governance details',
-        'Statutory declarations and confirmations'
-      ];
   }
   
   return {
     summary,
-    key_insights: insights,
   };
 }
 
@@ -372,26 +293,4 @@ function extractSection(content: string, sectionName: string): string | null {
   return section.trim() || null;
 }
 
-function extractListItems(content: string, section: string): string[] | null {
-  const lines = content.split('\n');
-  const items: string[] = [];
-  let inSection = false;
-  
-  for (const line of lines) {
-    if (line.toLowerCase().includes(section)) {
-      inSection = true;
-      continue;
-    }
-    
-    if (inSection) {
-      const trimmed = line.trim();
-      if (trimmed.match(/^[-•*]\s/) || trimmed.match(/^\d+\.\s/)) {
-        items.push(trimmed.replace(/^[-•*]\s/, '').replace(/^\d+\.\s/, ''));
-      } else if (trimmed === '') {
-        break;
-      }
-    }
-  }
-  
-  return items.length > 0 ? items : null;
-} 
+ 

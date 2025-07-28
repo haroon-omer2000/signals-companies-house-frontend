@@ -6,7 +6,6 @@ export interface PDFAnalysisData {
   filingType: string;
   filingDate: string;
   summary: string;
-  keyInsights: string[];
 }
 
 export function generateAnalysisPDF(data: PDFAnalysisData): void {
@@ -62,29 +61,7 @@ export function generateAnalysisPDF(data: PDFAnalysisData): void {
     yPosition = margin;
   }
   
-  // Key Insights Section
-  doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Key Insights', margin, yPosition);
-  yPosition += 10;
-  
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'normal');
-  
-      data.keyInsights.forEach((insight) => {
-    const bulletPoint = `• ${insight}`;
-    const insightLines = doc.splitTextToSize(bulletPoint, contentWidth);
-    doc.text(insightLines, margin, yPosition);
-    yPosition += (insightLines.length * 5) + 3;
-    
-    // Check if we need a new page
-    if (yPosition > 250) {
-      doc.addPage();
-      yPosition = margin;
-    }
-  });
-  
-  yPosition += 15;
+
   
   // Footer
   doc.setFontSize(10);
