@@ -1,36 +1,141 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🧠 AI-Powered UK Company Financial Insights
 
-## Getting Started
+A modern web application that provides AI-powered analysis of UK company filings using Companies House API and OpenAI integration.
 
-First, run the development server:
+## 🚀 How It Works
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+1. **Company Search**: Users search for UK companies by name or number using the Companies House Search API
+2. **Filing Retrieval**: The app fetches the 6 most recent financial filings (accounts, annual returns, confirmation statements)
+3. **Document Analysis**: Documents are downloaded and parsed for AI analysis
+4. **AI Insights**: OpenAI GPT-3.5-turbo generates comprehensive summaries and insights from document content
+5. **Trends Dashboard**: Visual charts show filing patterns and compliance health over time
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛠 Technical Architecture
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Frontend**: Next.js 15 with App Router, TypeScript, Tailwind CSS
+- **State Management**: RTK Query for efficient API caching and state management
+- **UI Components**: Mantine UI with custom animations and responsive design
+- **Data Source**: Companies House API with secure proxy routes
+- **AI Integration**: OpenAI API for document analysis and summarization
+- **Charts**: Recharts for data visualization
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## ✅ Core Requirements - Implemented
 
-## Learn More
+### 1. Company Search Interface
+- ✅ Search by company name or number
+- ✅ Fetch matching companies via Companies House API
+- ✅ Display company details (name, number, status, incorporation date)
 
-To learn more about Next.js, take a look at the following resources:
+### 2. Document Retrieval
+- ✅ Pull last 6 filings with financial prioritization
+- ✅ Filter for accounts, annual returns, and confirmation statements
+- ✅ Download documents (PDF/HTML) via Companies House Document API
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 3. AI Summary
+- ✅ Extract core information from documents
+- ✅ Generate 1-paragraph summaries per document using OpenAI
+- ✅ Structured analysis with key insights and financial highlights
+- ✅ Download AI summaries as PDF reports
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 4. UI Display
+- ✅ Clear, readable layout with modern design
+- ✅ Loading states and error handling
+- ✅ Responsive design for all devices
 
-## Deploy on Vercel
+## 🎨 Optional/Bonus Features - Implemented
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Enhanced UI/UX
+- ✅ Modern animated design with Framer Motion
+- ✅ Debounced search for performance
+- ✅ Comprehensive loading animations and skeleton states
+- ✅ Error handling with user-friendly messages
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Technical Enhancements
+- ✅ RTK Query for efficient state management
+- ✅ TypeScript for type safety
+- ✅ Secure API route proxies
+- ✅ Environment configuration management
+- ✅ Next.js 15 compatibility with async params
+
+### Advanced Features
+- ✅ **Filing Trends Dashboard**: Visual charts showing filing patterns over time
+- ✅ **Financial Health Score**: Algorithm-based compliance scoring (0-100)
+- ✅ **Streaming Downloads**: Optimized large file downloads
+- ✅ **Adaptive Loading States**: Smart timing for download progress
+
+## 🔧 Assumptions Made
+
+1. **Document Parsing**: PDF text extraction was limited due to library compatibility issues in Next.js environment
+2. **API Rate Limits**: Companies House API has generous limits for development use
+3. **File Sizes**: Large PDFs (10MB+) are handled with streaming for performance
+4. **Data Availability**: Some companies may have limited filing history
+5. **AI Analysis**: Fallback to enhanced metadata analysis when document content unavailable
+
+## 🚫 What Didn't Work & Why
+
+### PDF Text Extraction
+- **Issue**: `pdf-parse` library caused `ENOENT` errors in Next.js environment
+- **Impact**: AI analysis falls back to metadata-based summaries for PDFs
+- **Solution**: Implemented robust fallback system with enhanced filing analysis
+
+### OpenAI Model Access
+- **Issue**: Initial `gpt-4` model returned 404 errors
+- **Impact**: Switched to `gpt-3.5-turbo` for reliable access
+- **Solution**: Model change maintained quality while ensuring availability
+
+### CSS Conflicts
+- **Issue**: Mantine and Tailwind CSS conflicts caused invisible elements
+- **Impact**: Simplified styling approach with inline styles
+- **Solution**: Removed complex CSS layers, used direct styling for stability
+
+## 📊 Data Visualization Features
+
+### Filing Trends Dashboard
+- Monthly filing activity charts (last 12 months)
+- Filing type distribution pie charts
+- Key metrics: total filings, recent activity, average per year
+- Automated insights based on filing patterns
+
+### Financial Health Score
+- Algorithm scoring based on:
+  - Filing recency (30 points)
+  - Filing frequency (25 points)
+  - Document types (25 points)
+  - Document quality (20 points)
+- Visual score display with color-coded compliance status
+- Health insights and recommendations
+
+## 🔐 Security & Performance
+
+- **API Key Protection**: All external API calls proxied through secure backend routes
+- **Streaming Downloads**: Large files streamed directly without server buffering
+- **Error Handling**: Comprehensive error states and user feedback
+- **Rate Limiting**: Built-in debouncing and request management
+
+## 📈 Future Enhancements
+
+### Feature Enhancements
+- **Trends Summary**: Aggregate insights across multiple documents
+- **Email Sharing**: Send summaries via Resend integration
+- **Supabase Integration**: Caching and search history
+
+### Architecture & Scalability Improvements
+- **Microservices Architecture**: Separate Express.js backend for primary API and FastAPI for AI processing
+- **Database Integration**: PostgreSQL with Prisma ORM for data persistence
+- **Caching Layer**: Redis for API response caching and session management
+- **Message Queue**: RabbitMQ/Redis for async AI processing tasks
+- **API Gateway**: Kong or AWS API Gateway for rate limiting and authentication
+- **Load Balancing**: Horizontal scaling with multiple server instances
+
+### Development & Operations
+- **Testing Suite**: Jest for unit tests, Cypress for E2E, and API testing with Supertest
+- **CI/CD Pipeline**: GitHub Actions for automated testing, building, and deployment
+- **Monitoring**: Application performance monitoring with DataDog or New Relic
+- **Logging**: Structured logging with Winston and centralized log management
+- **Security**: JWT authentication, rate limiting, and API key rotation
+- **Documentation**: OpenAPI/Swagger documentation for all API endpoints
+
+### Performance Optimizations
+- **CDN Integration**: CloudFlare or AWS CloudFront for static assets
+- **Database Optimization**: Query optimization and connection pooling
+
