@@ -21,9 +21,14 @@ export const companiesHouseApi = createApi({
   tagTypes: ['Company', 'Filings', 'Document', 'Summary'],
   endpoints: (builder) => ({
     // Search for companies
-    searchCompanies: builder.query<CompanySearchResponse, { query: string; items_per_page?: number }>({
-      query: ({ query, items_per_page = 20 }) => 
-        `/search/companies?q=${encodeURIComponent(query)}&items_per_page=${items_per_page}`,
+    searchCompanies: builder.query<CompanySearchResponse, { query: string; items_per_page?: number; start_index?: number }>({
+      query: ({ query, items_per_page = 20, start_index = 1 }) => {
+        let url = `/search/companies?q=${encodeURIComponent(query)}&items_per_page=${items_per_page}`;
+        if (start_index > 1) {
+          url += `&start_index=${start_index}`;
+        }
+        return url;
+      },
       providesTags: ['Company'],
     }),
 

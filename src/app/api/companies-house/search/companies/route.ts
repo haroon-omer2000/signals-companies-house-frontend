@@ -4,6 +4,7 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const query = searchParams.get('q');
   const itemsPerPage = searchParams.get('items_per_page') || '20';
+  const startIndex = searchParams.get('start_index') || '1';
 
   if (!query) {
     return NextResponse.json(
@@ -21,7 +22,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const companiesHouseUrl = `${process.env.COMPANIES_HOUSE_BASE_URL}/search/companies?q=${encodeURIComponent(query)}&items_per_page=${itemsPerPage}`;
+    const companiesHouseUrl = `${process.env.COMPANIES_HOUSE_BASE_URL}/search/companies?q=${encodeURIComponent(query)}&items_per_page=${itemsPerPage}&start_index=${startIndex}`;
     
     // Companies House uses HTTP Basic Auth with API key as username and empty password
     const authString = Buffer.from(`${apiKey}:`).toString('base64');
