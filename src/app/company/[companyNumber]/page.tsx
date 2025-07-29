@@ -11,12 +11,15 @@ import { FilingCard } from '@/components/ui/FilingCard';
 import { FilingTrendsDashboard } from '@/components/ui/FilingTrendsDashboard';
 import { FinancialHealthScore } from '@/components/ui/FinancialHealthScore';
 import { LoadingCard } from '@/components/ui/LoadingCard';
+import { CacheManager } from '@/components/ui/CacheManager';
 import { 
   useGetCompanyDetailsQuery, 
   useGetFilingHistoryQuery,
   useDownloadAndParseDocumentMutation
 } from '@/lib/api/companies-house-api';
 import type { AIFilingSummary, Filing } from '@/types/companies-house';
+import { summaryCache } from '@/lib/utils/cache';
+import { useEffect } from 'react';
 
 export default function CompanyDetailsPage() {
   const params = useParams();
@@ -26,6 +29,7 @@ export default function CompanyDetailsPage() {
   const [analysisModalOpen, setAnalysisModalOpen] = useState(false);
   const [currentAnalysis, setCurrentAnalysis] = useState<AIFilingSummary | null>(null);
   const [currentFiling, setCurrentFiling] = useState<Filing | null>(null);
+  const [cachedFilings, setCachedFilings] = useState<Set<string>>(new Set());
 
   // Fetch company details and filing history
   const {
@@ -42,6 +46,45 @@ export default function CompanyDetailsPage() {
     { companyNumber, items_per_page: 100 },
     { skip: !companyNumber }
   );
+
+  // Check cache status when filings load
+  useEffect(() => {
+    if (filingHistory?.items) {
+      const checkCacheStatus = async () => {
+        const cachedIds = new Set<string>();
+        
+        for (const filing of filingHistory.items) {
+          if (filing.links?.document_metadata) {
+            try {
+              // Get document metadata to check cache
+              const metadataResponse = await fetch('/api/companies-house/document/metadata', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  documentMetadataUrl: filing.links.document_metadata
+                }),
+              });
+              
+              if (metadataResponse.ok) {
+                const metadata = await metadataResponse.json();
+                if (metadata.links?.document && summaryCache.has(metadata.links.document)) {
+                  cachedIds.add(filing.transaction_id);
+                }
+              }
+            } catch (error) {
+              console.error('Error checking cache status for filing:', filing.transaction_id, error);
+            }
+          }
+        }
+        
+        setCachedFilings(cachedIds);
+      };
+      
+      checkCacheStatus();
+    }
+  }, [filingHistory?.items]);
 
   const handleDownload = async (filing: Filing) => {
     console.log('Starting download for filing:', filing);
@@ -115,6 +158,7 @@ export default function CompanyDetailsPage() {
     
     try {
       let documentContent = '';
+      let documentContentUrl = '';
       
       // Step 1: Check if filing has document metadata link
       if (filing.links?.document_metadata) {
@@ -136,12 +180,29 @@ export default function CompanyDetailsPage() {
           console.log('Document metadata received:', metadata);
           
           if (metadata.links?.document) {
-            console.log('Downloading and parsing document from:', metadata.links.document);
+            documentContentUrl = metadata.links.document;
+            console.log('Document content URL:', documentContentUrl);
+            
+            // Check cache first
+            const cachedAnalysis = summaryCache.get(documentContentUrl);
+            if (cachedAnalysis) {
+              console.log('Found cached analysis, using cached data');
+              setCurrentAnalysis({
+                filing_id: filing.transaction_id,
+                filing_type: filing.category,
+                filing_date: filing.date,
+                summary: cachedAnalysis.summary,
+                insights: cachedAnalysis.insights,
+                financialHighlights: []
+              });
+              // Update cache status
+              setCachedFilings(prev => new Set(prev).add(filing.transaction_id));
+              return; // Exit early, no need to process further
+            }
+            
+            console.log('No cache found, downloading and parsing document from:', documentContentUrl);
             
             // Step 3: Download and parse the document
-            // The metadata.links.document is already the full content URL
-            const documentContentUrl = metadata.links.document;
-            
             try {
               // For AI analysis, we want to parse the document, not download it
               const documentResult = await downloadAndParseDocument({
@@ -182,6 +243,15 @@ export default function CompanyDetailsPage() {
       }
 
       const analysis = await response.json();
+      
+      // Cache the analysis if we have a document URL
+      if (documentContentUrl && analysis.summary) {
+        console.log('Caching analysis for future use');
+        summaryCache.set(documentContentUrl, analysis.summary, analysis.insights || '');
+        // Update cache status
+        setCachedFilings(prev => new Set(prev).add(filing.transaction_id));
+      }
+      
       setCurrentAnalysis(analysis);
       console.log('Analysis completed successfully');
       
@@ -362,6 +432,9 @@ export default function CompanyDetailsPage() {
           />
         )}
 
+        {/* Cache Manager */}
+        <CacheManager />
+
         {/* Filing History Section */}
         <div>
           <Title order={2} style={{ 
@@ -385,17 +458,22 @@ export default function CompanyDetailsPage() {
 
           {filingHistory && filingHistory.items && filingHistory.items.length > 0 && (
             <Grid>
-              {filingHistory.items.map((filing) => (
-                <Grid.Col key={filing.transaction_id} span={{ base: 12, sm: 6, lg: 4 }}>
-                  <FilingCard
-                    filing={filing}
-                    onDownload={handleDownload}
-                    onAnalyze={handleAnalyze}
-                    isAnalyzing={analyzingFiling === filing.transaction_id}
-                    isDownloading={downloadingFiling === filing.transaction_id}
-                  />
-                </Grid.Col>
-              ))}
+              {filingHistory.items.map((filing) => {
+                const isCached = cachedFilings.has(filing.transaction_id);
+                
+                return (
+                  <Grid.Col key={filing.transaction_id} span={{ base: 12, sm: 6, lg: 4 }}>
+                    <FilingCard
+                      filing={filing}
+                      onDownload={handleDownload}
+                      onAnalyze={handleAnalyze}
+                      isAnalyzing={analyzingFiling === filing.transaction_id}
+                      isDownloading={downloadingFiling === filing.transaction_id}
+                      isCached={isCached}
+                    />
+                  </Grid.Col>
+                );
+              })}
             </Grid>
           )}
 

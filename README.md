@@ -62,6 +62,7 @@ A modern web application that provides AI-powered analysis of UK company filings
 - ✅ **Financial Health Score**: Algorithm-based compliance scoring (0-100)
 - ✅ **Streaming Downloads**: Optimized large file downloads
 - ✅ **Adaptive Loading States**: Smart timing for download progress
+- ✅ **Smart Caching**: LocalStorage-based caching for AI summaries to avoid repeated API calls
 
 ## 🔧 Assumptions Made
 
