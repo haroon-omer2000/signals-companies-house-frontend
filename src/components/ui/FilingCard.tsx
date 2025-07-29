@@ -11,6 +11,7 @@ interface FilingCardProps {
   onAnalyze: (filing: Filing) => void;
   isAnalyzing?: boolean;
   isDownloading?: boolean;
+  isCached?: boolean;
 }
 
 export function FilingCard({ 
@@ -18,7 +19,8 @@ export function FilingCard({
   onDownload, 
   onAnalyze, 
   isAnalyzing = false,
-  isDownloading = false 
+  isDownloading = false,
+  isCached = false
 }: FilingCardProps) {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-GB', {
@@ -127,11 +129,11 @@ export function FilingCard({
             onClick={() => onAnalyze(filing)}
             loading={isAnalyzing}
             style={{
-              backgroundColor: '#3b82f6',
+              backgroundColor: isCached ? '#10b981' : '#3b82f6',
               border: 'none'
             }}
           >
-            {isAnalyzing ? 'Analyzing...' : 'AI Analysis'}
+            {isAnalyzing ? 'Analyzing...' : isCached ? 'AI Analysis (Cached)' : 'AI Analysis'}
           </Button>
         </Group>
       </Stack>
